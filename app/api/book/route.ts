@@ -8,8 +8,8 @@ export async function POST(req: Request) {
     if (body.is_post) {
       // create a ride_post
       const payload = {
-        from: body.from,
-        to: body.to,
+        from_location: body.from_location,
+        to_location: body.to_location,
         distance_km: body.distance_km || null,
         offer_amount: body.offer_amount || null,
         contact: body.contact || null,
@@ -20,8 +20,8 @@ export async function POST(req: Request) {
     }
     // direct booking
     const booking = {
-      from: body.from,
-      to: body.to,
+      from_location: body.from_location,
+      to_location: body.to_location,
       distance_km: body.distance_km || null,
       distance_source: body.distance_source || 'manual',
       status: 'requested',

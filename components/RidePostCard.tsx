@@ -6,7 +6,7 @@ export default function RidePostCard({ post, onReply }: any) {
     <div className="p-3 border rounded">
       <div className="flex justify-between items-center">
         <div>
-          <div className="font-medium">{post.from} → {post.to}</div>
+          <div className="font-medium">{post.from_location} → {post.to_location}</div>
           <div className="text-sm text-gray-600">{post.distance_km ? `${post.distance_km} km` : 'Distance: manual'}</div>
         </div>
         <div className="flex gap-2">

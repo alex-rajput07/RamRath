@@ -31,8 +31,6 @@ CREATE TABLE ride_posts (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   from_location text,
   to_location text,
-  "from" text,
-  "to" text,
   distance_km numeric,
   offer_amount numeric,
   contact text,
@@ -43,8 +41,8 @@ CREATE TABLE ride_posts (
 
 CREATE TABLE bookings (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  from text,
-  to text,
+  from_location text,
+  to_location text,
   distance_km numeric,
   distance_source text,
   status text DEFAULT 'requested',

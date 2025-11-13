@@ -14,7 +14,7 @@ export default function DirectBook() {
     const res = await fetch('/api/estimate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to })
+      body: JSON.stringify({ from_location: from, to_location: to })
     });
     const json = await res.json();
     if (json.error) {
@@ -29,7 +29,7 @@ export default function DirectBook() {
 
   function bookNow() {
     // create booking with status requested
-    fetch('/api/book', { method: 'POST', body: JSON.stringify({ from, to, distance_km: distance, distance_source: distanceSource }) });
+    fetch('/api/book', { method: 'POST', body: JSON.stringify({ from_location: from, to_location: to, distance_km: distance, distance_source: distanceSource }) });
     alert('Booking requested');
   }
 

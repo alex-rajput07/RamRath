@@ -11,7 +11,7 @@ export default function PostRide() {
   const [posts, setPosts] = useState<any[]>([]);
 
   async function postRide() {
-    const body = { from, to, distance_km: distance, offer_amount: offer, contact };
+    const body = { from_location: from, to_location: to, distance_km: distance, offer_amount: offer, contact };
     const res = await fetch('/api/book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, is_post: true }) });
     const json = await res.json();
     if (json?.id) {
