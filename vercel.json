@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "package.json", "use": "@vercel/next" }
+  ],
+  "env": {
+    "NEXT_PUBLIC_APP_NAME": "RamRath",
+    "NEXT_PUBLIC_DEFAULT_LOCALE": "en-IN",
+    "SUPABASE_URL": "",
+    "SUPABASE_ANON_KEY": "",
+    "SUPABASE_SERVICE_ROLE_KEY": "",
+    "GOOGLE_MAPS_API_KEY": "",
+    "VERCEL_ENV": "",
+    "TWILIO_ENABLED": "false",
+    "TWILIO_SID": "",
+    "TWILIO_AUTH_TOKEN": "",
+    "TWILIO_NUMBER": "",
+    "SENTRY_DSN": ""
+  },
+  "build": {
+    "env": {
+      "SUPABASE_SERVICE_ROLE_KEY": "",
+      "GOOGLE_MAPS_API_KEY": ""
+    }
+  }
+}
