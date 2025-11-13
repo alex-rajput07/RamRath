@@ -9,7 +9,6 @@ Welcome to Ram Rath! This guide will get you up and running in 15 minutes.
 - npm or yarn
 - Git
 - A Supabase account (free tier ok for dev)
-- Google Maps API key (Directions API)
 
 ### 1. Clone & Install
 ```powershell
@@ -26,13 +25,11 @@ NEXT_PUBLIC_DEFAULT_LOCALE=en-IN
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-GOOGLE_MAPS_API_KEY=your-google-server-key
 VERCEL_ENV=development
 ```
 
 Get these values:
 - **Supabase**: https://supabase.com → Create project → Settings → API Keys
-- **Google Maps**: https://console.cloud.google.com → Enable Directions API → Create API Key
 
 ### 3. Set Up Database
 1. In Supabase, go to SQL Editor
@@ -68,7 +65,7 @@ ramrath/
 ### Key Files
 - `app/layout.tsx` — Root layout, includes Header & Footer
 - `components/Footer.tsx` — "Made By AJ" badge (appears on all pages)
-- `app/api/estimate/route.ts` — Google Directions server proxy
+- `app/api/estimate/route.ts` — [Disabled] Was Google Directions proxy
 - `app/api/confirm/route.ts` — Atomic booking confirmation (calls Postgres RPC)
 - `lib/auth.ts` — Supabase JWT verification & role checks
 - `db/schema.sql` — Database schema (tables, indexes, RPC functions)

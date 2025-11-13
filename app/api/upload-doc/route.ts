@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServiceSupabase } from '../../../../lib/supabaseClient';
+import { getServiceSupabase } from '@/lib/supabaseClient';
+import { requireDriver } from '@/lib/auth';
 
 export async function POST(req: Request) {
   const svc = getServiceSupabase();
   try {
     const authHeader = req.headers.get('authorization');
-    const { requireDriver } = await import('../../../../lib/auth');
     const driverCheck = await requireDriver(authHeader);
     if (driverCheck.error) return NextResponse.json({ error: driverCheck.error }, { status: driverCheck.error === 'driver_not_verified' ? 403 : 401 });
 
@@ -19,11 +19,11 @@ export async function POST(req: Request) {
     const path = `driver-docs/${driver_id}/${Date.now()}-${filename}`;
     // Attempt to create a signed upload URL (requires service role key and supported by Supabase storage)
     try {
-      const res = await svc.storage.from('driver-docs').createSignedUploadUrl(path, 60);
-      if (res?.signedURL) {
+      const res = await svc.storage.from('driver-docs').createSignedUploadUrl(path, { upsert: true });
+      if (res?.data?.signedUrl) {
         // record document metadata in driver_documents table with placeholder url (public URL will be created after upload)
         await svc.from('driver_documents').insert({ driver_id, type: filename.split('.').pop(), url: path, uploaded_at: new Date().toISOString() });
-        return NextResponse.json({ uploadUrl: res.signedURL, path });
+        return NextResponse.json({ uploadUrl: res.data.signedUrl, path });
       }
       return NextResponse.json({ error: 'upload_not_supported' }, { status: 400 });
     } catch (err:any) {

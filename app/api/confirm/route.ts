@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getServiceSupabase } from '../../../../lib/supabaseClient';
-import { rateLimit } from '../../../../lib/rateLimit';
+import { getServiceSupabase } from '@/lib/supabaseClient';
+import { rateLimit } from '@/lib/rateLimit';
+import { requireDriver } from '@/lib/auth';
 
 export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for') || 'unknown';
@@ -14,7 +15,6 @@ export async function POST(req: Request) {
 
   // Require the caller to be an authenticated driver and match driver_id
   const authHeader = req.headers.get('authorization');
-  const { requireDriver } = await import('../../../../lib/auth');
   const drv = await requireDriver(authHeader);
   if (drv.error) return NextResponse.json({ error: drv.error }, { status: drv.error === 'driver_not_verified' ? 403 : 401 });
   if (drv.driver.id !== driver_id) return NextResponse.json({ error: 'driver_mismatch' }, { status: 403 });
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const res = (rpc as any).data || rpc;
     // If result contains error
     if (res && res.error) {
-      return NextResponse.json(res, { status: res.error = 'already_confirmed' ? 409 : 400 });
+      return NextResponse.json(res, { status: res.error === 'already_confirmed' ? 409 : 400 });
     }
     return NextResponse.json(res, { status: 200 });
   } catch (err: any) {

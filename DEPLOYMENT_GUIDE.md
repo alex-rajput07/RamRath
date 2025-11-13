@@ -5,7 +5,6 @@
 ### Prerequisites
 - GitHub repo connected to Vercel (already done at https://github.com/alex-rajput07/RamRath)
 - Supabase project with DB schema applied
-- Google Maps API key (Directions API enabled)
 
 ### Step 1: Create Vercel Project
 1. Go to https://vercel.com/new
@@ -27,7 +26,6 @@ NEXT_PUBLIC_DEFAULT_LOCALE=en-IN
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-GOOGLE_MAPS_API_KEY=your-google-server-key
 VERCEL_ENV=production
 TWILIO_ENABLED=false
 TWILIO_SID=
@@ -36,7 +34,7 @@ TWILIO_NUMBER=
 SENTRY_DSN=
 ```
 
-**Important:** Mark `SUPABASE_SERVICE_ROLE_KEY` and `GOOGLE_MAPS_API_KEY` as **Sensitive** so they don't leak into client builds.
+**Important:** Mark `SUPABASE_SERVICE_ROLE_KEY` as **Sensitive** so it doesn't leak into client builds.
 
 ### Step 3: Deploy
 - Push to `main` branch → Vercel auto-deploys
@@ -65,7 +63,6 @@ NEXT_PUBLIC_DEFAULT_LOCALE=en-IN
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-GOOGLE_MAPS_API_KEY=your-google-server-key
 VERCEL_ENV=development
 ```
 
@@ -135,18 +132,13 @@ UPDATE users SET role = 'admin' WHERE phone = '+919999999999';
 
 ---
 
-## Google Maps Setup
+## Distance Entry
 
-### Enable APIs
-In Google Cloud Console:
-1. Enable **Directions API**
-2. Enable **Places API** (optional, for autocomplete)
-3. Create an API key (server-only)
-
-### Usage
-- Directions API is called server-side in `/api/estimate`
-- Never expose the API key to the client
-- Monitor quota in Cloud Console to avoid overages
+Google Maps has been removed. The app now uses manual distance entry:
+- Users enter From, To, and Distance (km) manually in all booking forms
+- Distance validation: must be > 0 and < 1000 km
+- Error messages displayed in English and Hindi
+- All bookings record `distance_source = 'manual'`
 
 ---
 

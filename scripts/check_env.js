@@ -1,6 +1,5 @@
 const requiredServer = [
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'GOOGLE_MAPS_API_KEY'
+  'SUPABASE_SERVICE_ROLE_KEY'
 ];
 const recommended = [
   'SUPABASE_URL',

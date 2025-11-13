@@ -1,21 +1,31 @@
 # Ram Rath
-# Ram Rath
 
 Minimal production-ready Next.js (app-router) scaffold for Ram Rath.
 
-Requirements
+## Key Features
+
+- ✅ Manual distance entry (Google Maps removed)
+- ✅ Supabase authentication & PostgreSQL database
+- ✅ Responsive design with Tailwind CSS
+- ✅ Atomic booking confirmation with PostgreSQL RPC
+- ✅ Security headers & rate limiting
+- ✅ Bilingual UI (English & Hindi)
+- ✅ "Made By AJ" footer on all pages
+
+## Requirements
+
 - Node 20+, npm
 - Supabase project (URL, anon key, service role key)
-- Google Maps Directions API key (server-side)
 
-Environment variables (create `.env.local`):
+## Environment Variables
+
+Create `.env.local`:
 ```
 NEXT_PUBLIC_APP_NAME=RamRath
 NEXT_PUBLIC_DEFAULT_LOCALE=en-IN
 SUPABASE_URL=your-supabase-url
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-GOOGLE_MAPS_API_KEY=your-google-server-key
 VERCEL_ENV=production
 TWILIO_ENABLED=false
 TWILIO_SID=
@@ -24,32 +34,84 @@ TWILIO_NUMBER=
 SENTRY_DSN=
 ```
 
-Local run
+## Local Development
+
 ```powershell
-npm ci
-# copy badge from /mnt/data if present
-powershell -File scripts/copy_badge.ps1
+npm install
 npm run dev
 ```
 
-Build & test
+Then open http://localhost:3000
+
+## Build & Test
+
 ```powershell
 npm run build
 npm run test
+npm run lint
 ```
 
-Note: The build runs a pre-check to ensure required server env variables are present. The `prebuild` script will fail the build if `SUPABASE_SERVICE_ROLE_KEY` or `GOOGLE_MAPS_API_KEY` are not set. This prevents accidental deploys without necessary server keys.
+## Distance Entry
 
-When deploying to Vercel, use `vercel.env.example` as a reference for which environment variables to set in the Vercel project settings.
+**Google Maps has been removed.** Users now manually enter distances:
 
-Notes
-- The copy script attempts to copy the provided badge from `/mnt/data/292d3d87-559c-4104-949b-562ab2bad432.png` into `public/assets/badge.png`.
-- Google Maps key is used only in server API route `/api/estimate`.
-- Commission calculation is applied in `/api/confirm` and recorded in `commissions` table.
+- **Direct Book**: Enter From → To → Distance (km) → Book
+- **Post Ride**: Enter From → To → Distance (km) → Offer Amount → Post
 
-Developer handoff
-- Important files: `app/api/*` server routes, `lib/supabaseClient.ts`, `lib/googleMaps.ts`, `db/schema.sql`.
-- To seed sample data run: `npm run seed` (requires `SUPABASE_SERVICE_ROLE_KEY`).
+Distance validation:
+- Must be > 0 km
+- Must be < 1000 km
+- Error messages shown in English & Hindi
 
-10 Clarification Questions
-See `QUESTIONS.md` for the 10 precise confirmation questions we need answered before final polish.
+## Deployment
+
+Deploy to Vercel with these env vars set in project settings:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+See `DEPLOYMENT_GUIDE.md` for full instructions.
+
+## Developer Notes
+
+- **API Routes**: `/api/book`, `/api/confirm`, `/api/estimate` (disabled), `/api/admin/verify`, `/api/upload-doc`
+- **Database**: Run `db/schema.sql` in Supabase SQL editor
+- **Seed Data**: `npm run seed`
+- **Footer**: "Made By AJ" badge on every page via `components/Footer.tsx`
+
+## File Structure
+
+```
+app/
+  direct-book/      → Book a car (manual distance)
+  post-ride/        → Post ride request (manual distance)
+  api/
+    book/           → Create bookings
+    confirm/        → Confirm on call (atomic RPC)
+    estimate/       → [Disabled] Was Google Maps
+    admin/verify    → Admin verification
+    upload-doc/     → Driver document upload
+components/
+  Header.tsx
+  Footer.tsx        → "Made By AJ" badge
+  DriverCard.tsx
+lib/
+  supabaseClient.ts
+  auth.ts           → JWT verification & role checks
+  rateLimit.ts      → In-memory rate limiter
+db/
+  schema.sql        → PostgreSQL schema with atomic confirm_booking() RPC
+```
+
+## FAQ
+
+**Q: How do I get the API key for Google Maps?**
+A: Google Maps is no longer used. Distance is entered manually.
+
+**Q: What happens when confirming a booking?**
+A: The `confirm_booking()` PostgreSQL RPC atomically updates booking status, creates commission record, and logs to audit_logs.
+
+**Q: Can I re-enable Google Maps?**
+A: Yes, restore the `lib/googleMaps.ts` file from git history and update `/api/estimate`.
+
+**See ONBOARDING.md for setup walkthrough.**
