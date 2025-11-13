@@ -2,20 +2,37 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Profiles table (core auth users)
+CREATE TABLE IF NOT EXISTS profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  phone text UNIQUE NOT NULL,
+  role text NOT NULL CHECK (role IN ('booker', 'driver', 'admin')) DEFAULT 'booker',
+  verified boolean DEFAULT false,
+  full_name text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Drivers table (extended info for drivers)
+CREATE TABLE IF NOT EXISTS drivers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  full_name text NOT NULL,
+  vehicle_type text NOT NULL CHECK (vehicle_type IN ('auto', 'bike', 'car')),
+  rc_doc_url text,
+  id_doc_url text,
+  selfie_url text,
+  verified boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Legacy tables (kept for backward compatibility)
 CREATE TABLE users (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   phone text UNIQUE NOT NULL,
   name text,
   role text DEFAULT 'passenger',
-  created_at timestamptz DEFAULT now()
-);
-
-CREATE TABLE drivers (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id uuid REFERENCES users(id),
-  vehicle_no text,
-  verified boolean DEFAULT false,
-  verification_status text DEFAULT 'pending',
   created_at timestamptz DEFAULT now()
 );
 
@@ -41,16 +58,18 @@ CREATE TABLE ride_posts (
 
 CREATE TABLE bookings (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  booker_id uuid REFERENCES profiles(id),
+  driver_id uuid REFERENCES profiles(id),
   from_location text,
   to_location text,
   distance_km numeric,
-  distance_source text,
-  status text DEFAULT 'requested',
+  distance_source text DEFAULT 'manual',
+  status text DEFAULT 'pending',
   passenger_phone_snapshot text,
   driver_phone_snapshot text,
   confirmed_on_call boolean DEFAULT false,
   confirmed_at timestamptz,
-  confirmed_by_driver_id uuid REFERENCES drivers(id),
+  confirmed_by_driver_id uuid,
   created_at timestamptz DEFAULT now()
 );
 
@@ -79,16 +98,26 @@ CREATE TABLE booking_call_logs (
   timestamp timestamptz DEFAULT now()
 );
 
-CREATE TABLE audit_logs (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+-- Audit logs table
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   action text NOT NULL,
-  admin_id uuid,
-  data jsonb,
+  user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE SET NULL,
+  details jsonb DEFAULT '{}',
+  ip_address text,
   created_at timestamptz DEFAULT now()
 );
 
 CREATE INDEX idx_bookings_status ON bookings(status);
+CREATE INDEX idx_bookings_booker_id ON bookings(booker_id);
+CREATE INDEX idx_bookings_driver_id ON bookings(driver_id);
 CREATE INDEX idx_ride_posts_status ON ride_posts(status);
+CREATE INDEX idx_drivers_verified ON drivers(verified);
+CREATE INDEX idx_profiles_role ON profiles(role);
+CREATE INDEX idx_profiles_verified ON profiles(verified);
+CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
 
 -- Transactional server-side function to confirm a booking atomically.
 -- This ensures first-in wins and writes commissions, call logs and audit logs in a single transaction.
@@ -130,7 +159,7 @@ BEGIN
   INSERT INTO booking_call_logs(booking_id, driver_id, passenger_phone_snapshot, driver_phone_snapshot, timestamp)
     VALUES (p_booking_id, p_driver_id, p_passenger_phone, p_driver_phone, now());
 
-  INSERT INTO audit_logs(action, admin_id, data, created_at) VALUES ('confirm_on_call', NULL, jsonb_build_object('booking_id', p_booking_id, 'driver_id', p_driver_id, 'commission', fee), now());
+  INSERT INTO audit_logs(action, user_id, details, created_at) VALUES ('confirm_on_call', p_driver_id, jsonb_build_object('booking_id', p_booking_id, 'driver_id', p_driver_id, 'commission', fee), now());
 
   result := jsonb_build_object('success', true, 'commission', fee);
   RETURN;
