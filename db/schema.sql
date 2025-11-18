@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS drivers (
 );
 
 -- Legacy tables (kept for backward compatibility)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   phone text UNIQUE NOT NULL,
   name text,
@@ -36,7 +36,7 @@ CREATE TABLE users (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE TABLE driver_documents (
+CREATE TABLE IF NOT EXISTS driver_documents (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   driver_id uuid REFERENCES drivers(id) ON DELETE CASCADE,
   type text,
@@ -44,7 +44,7 @@ CREATE TABLE driver_documents (
   uploaded_at timestamptz DEFAULT now()
 );
 
-CREATE TABLE ride_posts (
+CREATE TABLE IF NOT EXISTS ride_posts (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   from_location text,
   to_location text,
@@ -56,7 +56,7 @@ CREATE TABLE ride_posts (
   posted_by uuid REFERENCES users(id)
 );
 
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   booker_id uuid REFERENCES profiles(id),
   driver_id uuid REFERENCES profiles(id),
@@ -73,7 +73,7 @@ CREATE TABLE bookings (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   booking_id uuid REFERENCES bookings(id),
   amount numeric,
@@ -82,14 +82,14 @@ CREATE TABLE payments (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE TABLE commissions (
+CREATE TABLE IF NOT EXISTS commissions (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   booking_id uuid REFERENCES bookings(id),
   amount numeric,
   created_at timestamptz DEFAULT now()
 );
 
-CREATE TABLE booking_call_logs (
+CREATE TABLE IF NOT EXISTS booking_call_logs (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   booking_id uuid REFERENCES bookings(id),
   driver_id uuid REFERENCES drivers(id),
@@ -108,16 +108,16 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE INDEX idx_bookings_status ON bookings(status);
-CREATE INDEX idx_bookings_booker_id ON bookings(booker_id);
-CREATE INDEX idx_bookings_driver_id ON bookings(driver_id);
-CREATE INDEX idx_ride_posts_status ON ride_posts(status);
-CREATE INDEX idx_drivers_verified ON drivers(verified);
-CREATE INDEX idx_profiles_role ON profiles(role);
-CREATE INDEX idx_profiles_verified ON profiles(verified);
-CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_action ON audit_logs(action);
-CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_booker_id ON bookings(booker_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_driver_id ON bookings(driver_id);
+CREATE INDEX IF NOT EXISTS idx_ride_posts_status ON ride_posts(status);
+CREATE INDEX IF NOT EXISTS idx_drivers_verified ON drivers(verified);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
+CREATE INDEX IF NOT EXISTS idx_profiles_verified ON profiles(verified);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
 
 -- Transactional server-side function to confirm a booking atomically.
 -- This ensures first-in wins and writes commissions, call logs and audit logs in a single transaction.
