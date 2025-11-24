@@ -1,24 +1,86 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { RoleSwitcher, UserRole } from '@/components/RoleSwitcher';
 import { AuthOTPForm } from '@/components/AuthOTPForm';
 import { DriverOnboardingForm, DriverOnboardingData } from '@/components/DriverOnboardingForm';
 import { getSupabase } from '@/lib/supabaseClient';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<UserRole>('booker');
-  const [currentStep, setCurrentStep] = useState<'role' | 'otp' | 'onboarding'>('role');
+  const searchParams = useSearchParams();
+  const [selectedRole, setSelectedRole] = useState<UserRole>(
+    (searchParams.get('role') as UserRole) || 'booker'
+  );
+  const [currentStep, setCurrentStep] = useState<'role' | 'otp' | 'onboarding' | 'admin-login'>(
+    selectedRole === 'admin' ? 'admin-login' : 'role'
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [phone, setPhone] = useState('');
 
+  // Admin email + password login state
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+
+  const handleAdminLogin = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const supabase = getSupabase();
+
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: adminEmail,
+        password: adminPassword,
+      });
+
+      if (authError) throw authError;
+
+      if (!data.user) throw new Error('Admin login failed');
+
+      // Verify user is admin
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || profile?.role !== 'admin') {
+        throw new Error('Unauthorized: Admin access only');
+      }
+
+      // Log admin login
+      await supabase.from('audit_logs').insert({
+        action: 'ADMIN_LOGIN',
+        user_id: data.user.id,
+        details: { email: adminEmail },
+        ip_address: 'client',
+        created_at: new Date().toISOString(),
+      });
+
+      router.push('/admin/panel');
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Admin login failed. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleOTPSuccess = async (phoneNumber: string, otp: string) => {
     setIsLoading(true);
     setError('');
+
+    // Block admin signup
+    if (selectedRole === 'admin') {
+      setError('Admin accounts cannot be created through signup. Please use your system-provided login.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const supabase = getSupabase();
@@ -26,7 +88,7 @@ export default function LoginPage() {
       // Call signUp with OTP (Supabase auth)
       const { data, error: authError } = await supabase.auth.signUp({
         email: `${phoneNumber}@ramrath.local`,
-        password: otp, // Simple approach: OTP as password (in production, use proper auth flow)
+        password: otp,
       });
 
       if (authError) throw authError;
@@ -38,12 +100,21 @@ export default function LoginPage() {
         id: data.user.id,
         phone: phoneNumber,
         role: selectedRole,
-        verified: selectedRole === 'admin' ? true : selectedRole === 'booker', // Bookers auto-verified
+        verified: selectedRole === 'booker', // Bookers auto-verified, Drivers require admin approval
         full_name: '',
         created_at: new Date().toISOString(),
       });
 
       if (profileError) throw profileError;
+
+      // Log signup action
+      await supabase.from('audit_logs').insert({
+        action: 'USER_SIGNUP',
+        user_id: data.user.id,
+        details: { role: selectedRole, phone: phoneNumber },
+        ip_address: 'client',
+        created_at: new Date().toISOString(),
+      });
 
       setPhone(phoneNumber);
 
@@ -51,7 +122,7 @@ export default function LoginPage() {
         // Driver needs onboarding
         setCurrentStep('onboarding');
       } else {
-        // Booker/Admin go to dashboard
+        // Booker goes to dashboard
         router.push(`/${selectedRole}/dashboard`);
       }
     } catch (err) {
@@ -123,8 +194,18 @@ export default function LoginPage() {
     }
   };
 
+  const handleRoleChange = (newRole: UserRole) => {
+    setSelectedRole(newRole);
+    if (newRole === 'admin') {
+      setCurrentStep('admin-login');
+    } else {
+      setCurrentStep('role');
+    }
+    setError('');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white p-4 py-12 md:py-20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-green-50 p-4 py-12 md:py-20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -140,21 +221,95 @@ export default function LoginPage() {
         </div>
 
         {/* Role Selector or Form */}
-        {currentStep === 'role' && (
+        {(currentStep === 'role' || currentStep === 'admin-login') && (
           <div className="bg-white rounded-xl shadow-lg p-8">
-            <RoleSwitcher selectedRole={selectedRole} onRoleChange={setSelectedRole} />
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setCurrentStep('otp')}
-              className="w-full py-3 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 transition-colors mt-6"
-            >
-              आगे बढ़ें / Next
-            </motion.button>
+            <RoleSwitcher selectedRole={selectedRole} onRoleChange={handleRoleChange} />
+
+            {/* Admin Login Form */}
+            {currentStep === 'admin-login' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200"
+              >
+                <p className="text-sm text-blue-900 mb-4 font-semibold">
+                  ⚙️ Admin accounts cannot be created here. Please use your system-provided login.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      📧 Email
+                    </label>
+                    <input
+                      type="email"
+                      value={adminEmail}
+                      onChange={(e) => {
+                        setAdminEmail(e.target.value);
+                        setError('');
+                      }}
+                      placeholder="admin@example.com"
+                      disabled={isLoading}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all bg-white text-base font-medium placeholder-gray-400 disabled:bg-gray-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      🔐 Password
+                    </label>
+                    <input
+                      type="password"
+                      value={adminPassword}
+                      onChange={(e) => {
+                        setAdminPassword(e.target.value);
+                        setError('');
+                      }}
+                      placeholder="••••••••"
+                      disabled={isLoading}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all bg-white text-base font-medium placeholder-gray-400 disabled:bg-gray-100"
+                    />
+                  </div>
+
+                  <motion.button
+                    onClick={handleAdminLogin}
+                    disabled={isLoading || !adminEmail || !adminPassword}
+                    whileHover={!isLoading && adminEmail && adminPassword ? { scale: 1.02 } : {}}
+                    whileTap={!isLoading && adminEmail && adminPassword ? { scale: 0.98 } : {}}
+                    className="w-full py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-base hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1 }}
+                          className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                        />
+                        लॉगिन हो रहे हैं... / Logging in...
+                      </>
+                    ) : (
+                      '🔓 Admin Login'
+                    )}
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Booker/Driver Next Button */}
+            {currentStep === 'role' && selectedRole !== 'admin' && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setCurrentStep('otp')}
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-lg hover:shadow-lg transition-all mt-6"
+              >
+                आगे बढ़ें / Next →
+              </motion.button>
+            )}
           </div>
         )}
 
-        {currentStep === 'otp' && (
+        {currentStep === 'otp' && selectedRole !== 'admin' && (
           <div className="bg-white rounded-xl shadow-lg p-8">
             <AuthOTPForm
               role={selectedRole}
@@ -173,7 +328,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        {currentStep === 'onboarding' && (
+        {currentStep === 'onboarding' && selectedRole === 'driver' && (
           <div className="bg-white rounded-xl shadow-lg p-8">
             <DriverOnboardingForm
               phone={phone}
@@ -210,5 +365,13 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-12">Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
