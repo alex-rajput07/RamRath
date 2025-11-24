@@ -80,102 +80,114 @@ export function AnimatedHero({ title, description }: AnimatedHeroProps) {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50 px-4 py-12 sm:px-6 lg:px-8"
+      className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-green-50 px-4 py-16 sm:px-6 lg:px-8 flex flex-col justify-center"
     >
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           variants={floatVariants}
           animate="animate"
-          className="absolute right-10 top-20 h-40 w-40 rounded-full bg-blue-100 opacity-20 blur-3xl"
+          className="absolute -right-40 top-10 h-80 w-80 rounded-full bg-blue-200/20 blur-3xl"
         />
         <motion.div
           variants={floatVariants}
           animate="animate"
           transition={{ delay: 0.2 }}
-          className="absolute left-10 bottom-20 h-40 w-40 rounded-full bg-green-100 opacity-20 blur-3xl"
+          className="absolute -left-40 -bottom-40 h-80 w-80 rounded-full bg-green-200/20 blur-3xl"
+        />
+        <motion.div
+          variants={floatVariants}
+          animate="animate"
+          transition={{ delay: 0.4 }}
+          className="absolute right-1/4 -top-40 h-60 w-60 rounded-full bg-purple-200/10 blur-3xl"
         />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-3xl text-center">
+      <div className="relative z-10 mx-auto max-w-4xl text-center space-y-8">
         {/* Logo Animation */}
         <motion.div
           variants={itemVariants}
-          className="mb-6 flex justify-center"
+          className="flex justify-center"
         >
           <motion.div
             variants={scaleVariants}
             animate="animate"
-            className="text-5xl sm:text-6xl font-bold"
+            className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-green-500 shadow-2xl text-4xl"
           >
             🚗
           </motion.div>
         </motion.div>
 
         {/* Main Title */}
-        <motion.h1 variants={itemVariants} className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl">
-          {title || 'Ram Rath'}
-        </motion.h1>
-
-        {/* Subtitle in Hindi */}
-        <motion.h2 variants={itemVariants} className="mb-6 text-3xl font-semibold text-green-700">
-          राम रथ
-        </motion.h2>
+        <motion.div variants={itemVariants} className="space-y-3">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
+            Ram Rath
+          </h1>
+          <h2 className="text-3xl sm:text-4xl font-semibold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+            राम रथ
+          </h2>
+        </motion.div>
 
         {/* Description */}
         <motion.p
           variants={itemVariants}
-          className="mb-12 text-lg text-gray-600 sm:text-xl"
+          className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed"
         >
-          {description ||
-            'Rural mobility made simple. Zero internet required for booking.'}
+          Rural mobility made simple, safe, and affordable. Connect riders and drivers directly—no internet required.
         </motion.p>
 
         {/* Feature Pills */}
         <motion.div
           variants={itemVariants}
-          className="mb-12 flex flex-wrap justify-center gap-3"
+          className="flex flex-wrap justify-center gap-3 pt-4"
         >
-          {['📍 No Maps', '📱 Low Data', '🤝 Direct Connect'].map((feature, i) => (
-            <motion.span
-              key={feature}
+          {[
+            { icon: '📍', label: 'No Maps' },
+            { icon: '📱', label: 'Low Data' },
+            { icon: '🤝', label: 'Direct Connect' },
+            { icon: '⚡', label: 'Instant' },
+          ].map((feature, i) => (
+            <motion.div
+              key={feature.label}
               variants={itemVariants}
-              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-md"
+              className="backdrop-blur-md bg-white/60 border border-white/80 rounded-full px-4 py-2 shadow-lg hover:shadow-xl transition-shadow"
             >
-              {feature}
-            </motion.span>
+              <span className="text-sm font-semibold text-gray-700">
+                {feature.icon} {feature.label}
+              </span>
+            </motion.div>
           ))}
         </motion.div>
 
         {/* CTA Cards */}
-        <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2">
+        <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2 pt-8 max-w-xl mx-auto">
           {[
             {
               href: '/direct-book',
               icon: '🚕',
-              title: 'Book a Car',
+              title: 'Book a Ride',
               subtitle: 'गाड़ी बुक करें',
-              color: 'from-blue-500 to-blue-600',
+              gradient: 'from-blue-500 to-cyan-500',
             },
             {
               href: '/post-ride',
               icon: '📣',
               title: 'Post a Ride',
               subtitle: 'राइड पोस्ट करें',
-              color: 'from-green-500 to-green-600',
+              gradient: 'from-green-500 to-emerald-500',
             },
           ].map((cta, i) => (
             <motion.div
               key={cta.href}
               variants={itemVariants}
-              whileHover={!prefersReducedMotion ? { scale: 1.05, y: -5 } : {}}
+              whileHover={!prefersReducedMotion ? { scale: 1.05, y: -8 } : {}}
               whileTap={!prefersReducedMotion ? { scale: 0.98 } : {}}
               className="relative group"
             >
               <Link
                 href={cta.href}
-                className={`relative block overflow-hidden rounded-lg bg-gradient-to-br ${cta.color} px-6 py-8 text-white shadow-lg transition-all group-hover:shadow-xl`}
+                className={`relative block overflow-hidden rounded-2xl bg-gradient-to-br ${cta.gradient} px-6 py-10 text-white shadow-xl hover:shadow-2xl transition-all`}
               >
                 {/* Shimmer effect on hover */}
                 <motion.div
@@ -184,16 +196,16 @@ export function AnimatedHero({ title, description }: AnimatedHeroProps) {
                     x: ['-100%', '100%'],
                   }}
                   transition={{
-                    duration: 0.5,
+                    duration: 0.6,
                     repeat: Infinity,
                     repeatDelay: 2,
                   }}
                 />
 
-                <div className="relative z-10">
-                  <div className="mb-2 text-3xl">{cta.icon}</div>
-                  <div className="text-xl font-bold">{cta.title}</div>
-                  <div className="text-sm font-light opacity-90">{cta.subtitle}</div>
+                <div className="relative z-10 text-center">
+                  <div className="mb-3 text-4xl">{cta.icon}</div>
+                  <div className="text-2xl font-bold leading-tight">{cta.title}</div>
+                  <div className="text-sm font-light opacity-90 mt-1">{cta.subtitle}</div>
                 </div>
               </Link>
             </motion.div>
@@ -201,12 +213,13 @@ export function AnimatedHero({ title, description }: AnimatedHeroProps) {
         </motion.div>
 
         {/* Secondary CTA */}
-        <motion.div variants={itemVariants} className="mt-12">
+        <motion.div variants={itemVariants} className="pt-4">
           <Link
             href="/login"
-            className="inline-block rounded-lg border-2 border-gray-900 px-6 py-3 font-semibold text-gray-900 transition hover:bg-gray-900 hover:text-white"
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-xl border-2 border-gray-900 bg-white text-gray-900 font-semibold hover:bg-gray-900 hover:text-white transition-all shadow-lg hover:shadow-xl"
           >
             आरंभ करें / Get Started
+            <span className="text-lg">→</span>
           </Link>
         </motion.div>
       </div>
@@ -214,20 +227,21 @@ export function AnimatedHero({ title, description }: AnimatedHeroProps) {
       {/* Bottom Stats */}
       <motion.div
         variants={itemVariants}
-        className="relative z-10 mt-16 grid grid-cols-3 gap-4 rounded-lg bg-white p-6 shadow-lg"
+        className="relative z-10 mt-24 grid grid-cols-3 gap-4 rounded-2xl bg-white/80 backdrop-blur-md border border-white/60 p-8 shadow-xl max-w-md mx-auto w-full"
       >
         {[
-          { label: 'Users', value: '1000+' },
-          { label: 'Rides', value: '5000+' },
-          { label: 'Coverage', value: '10+ States' },
+          { label: 'Users', value: '1000+', icon: '👥' },
+          { label: 'Rides', value: '5000+', icon: '🚗' },
+          { label: 'Coverage', value: '10+ States', icon: '🗺️' },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
             className="text-center"
             variants={itemVariants}
           >
-            <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-            <div className="text-xs text-gray-600">{stat.label}</div>
+            <div className="text-2xl mb-2">{stat.icon}</div>
+            <div className="text-xl font-bold text-gray-900">{stat.value}</div>
+            <div className="text-xs text-gray-600 font-medium">{stat.label}</div>
           </motion.div>
         ))}
       </motion.div>

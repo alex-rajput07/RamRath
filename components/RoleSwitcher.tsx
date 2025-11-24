@@ -32,45 +32,59 @@ const ROLES: { id: UserRole; label: string; description: string; icon: string }[
 ];
 
 export function RoleSwitcher({ selectedRole, onRoleChange }: RoleSwitcherProps) {
-  const [hoveredRole, setHoveredRole] = useState<UserRole | null>(null);
-
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-bold text-center mb-6 text-gray-800">
+      <h2 className="text-2xl font-bold text-center mb-2 text-gray-900">
         आप कौन हैं? / Who are you?
       </h2>
+      <p className="text-center text-gray-600 text-sm mb-8">Select your role to continue</p>
+      
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {ROLES.map((role) => (
+        {ROLES.map((role, index) => (
           <motion.button
             key={role.id}
             onClick={() => onRoleChange(role.id)}
-            onMouseEnter={() => setHoveredRole(role.id)}
-            onMouseLeave={() => setHoveredRole(null)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`relative p-6 rounded-lg border-2 transition-all ${
+            whileHover={{ scale: 1.02, y: -4 }}
+            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1, duration: 0.5 }}
+            className={`relative group rounded-xl border-2 transition-all overflow-hidden ${
               selectedRole === role.id
-                ? 'border-orange-500 bg-orange-50'
-                : 'border-gray-300 bg-white hover:border-orange-400'
+                ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg'
+                : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
             }`}
           >
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-center"
-            >
-              <div className="text-4xl mb-2">{role.icon}</div>
-              <div className="font-bold text-sm text-gray-900 mb-1">{role.label}</div>
-              <div className="text-xs text-gray-600">{role.description}</div>
-            </motion.div>
-            {selectedRole === role.id && (
+            {/* Background Gradient on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-green-400/0 group-hover:from-blue-400/10 group-hover:to-green-400/10 transition-all" />
+
+            <div className="relative p-8 text-center space-y-3">
               <motion.div
-                layoutId="selected-role"
-                className="absolute inset-0 border-2 border-orange-500 rounded-lg pointer-events-none"
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              />
-            )}
+                animate={selectedRole === role.id ? { scale: 1.1, rotate: 5 } : {}}
+                className="text-5xl"
+              >
+                {role.icon}
+              </motion.div>
+              
+              <div>
+                <div className="font-bold text-lg text-gray-900">{role.label}</div>
+                <div className="text-sm text-gray-600 mt-1">{role.description}</div>
+              </div>
+
+              {selectedRole === role.id && (
+                <motion.div
+                  layoutId="selected-indicator"
+                  className="pt-2"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <div className="inline-block px-3 py-1 rounded-full bg-blue-500 text-white text-xs font-semibold">
+                    ✓ Selected
+                  </div>
+                </motion.div>
+              )}
+            </div>
           </motion.button>
         ))}
       </div>
