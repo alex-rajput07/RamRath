@@ -230,11 +230,16 @@ function LoginPageContent() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200"
+                className="mt-8 p-6 bg-red-50 rounded-lg border-2 border-red-300"
               >
-                <p className="text-sm text-blue-900 mb-4 font-semibold">
-                  ⚙️ Admin accounts cannot be created here. Please use your system-provided login.
-                </p>
+                <div className="mb-4 p-3 bg-red-100 rounded border border-red-300">
+                  <p className="text-sm text-red-900 font-semibold">
+                    🔐 Admin Sign Up Disabled
+                  </p>
+                  <p className="text-xs text-red-800 mt-1">
+                    Admin accounts cannot be created here. Use your system-provided login credentials only.
+                  </p>
+                </div>
 
                 <div className="space-y-4">
                   <div>
